@@ -89,10 +89,7 @@
         });
 
         // 2. ถ้ายังไม่ได้ login
-       if (
-  !liff.isInClient() &&
-  !liff.isLoggedIn()
-) {
+   if (!liff.isLoggedIn()) {
 
   status.textContent =
     'กำลังเข้าสู่ระบบ LINE...';
@@ -103,7 +100,6 @@
 
   return;
 }
-
         // 3. รับ ID Token
         const idToken =
           liff.getIDToken();
