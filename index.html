@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>UP2 Space Booking</title>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #ffffff;
+      color: #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .box {
+      width: calc(100% - 48px);
+      max-width: 420px;
+      text-align: center;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .status {
+      font-size: 16px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .error {
+      margin-top: 16px;
+      color: #b42318;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="box">
+    <div class="title">UP2 Space</div>
+
+    <div id="status" class="status">
+      กำลังเชื่อมต่อ LINE...
+    </div>
+
+    <div id="error" class="error"></div>
+  </div>
+
+
+  <script>
+
+    // ===== UP2 V4 CONFIG =====
+
+    const LIFF_ID =
+      '2012465630-3e7RQrTe';
+
+    const BOOKING_URL =
+      'https://script.google.com/macros/s/AKfycbxTX0tp3HSz2odmRzgBq3cDTsFQpTBOHNI7aXqB9bb3osRFsNPbpcXK3KCNLKQlQf4_Nw/exec';
+
+
+    async function startUP2() {
+
+      const status =
+        document.getElementById('status');
+
+      const errorBox =
+        document.getElementById('error');
+
+      try {
+
+        // 1. เริ่ม LIFF
+        await liff.init({
+          liffId: LIFF_ID,
+          withLoginOnExternalBrowser: true
+        });
+
+        // 2. ถ้ายังไม่ได้ login
+        if (!liff.isLoggedIn()) {
+
+          status.textContent =
+            'กำลังเข้าสู่ระบบ LINE...';
+
+          liff.login({
+            redirectUri:
+              window.location.href
+          });
+
+          return;
+        }
+
+        // 3. รับ ID Token
+        const idToken =
+          liff.getIDToken();
+
+        if (!idToken) {
+
+          throw new Error(
+            'ไม่สามารถรับ LINE ID Token ได้'
+          );
+        }
+
+        status.textContent =
+          'กำลังเปิดหน้าจอง...';
+
+
+        // 4. ส่ง token ไป Apps Script แบบ POST
+        const form =
+          document.createElement('form');
+
+        form.method = 'POST';
+        form.action = BOOKING_URL;
+        form.style.display = 'none';
+
+
+        const pageInput =
+          document.createElement('input');
+
+        pageInput.type = 'hidden';
+        pageInput.name = 'page';
+        pageInput.value = 'booking';
+
+
+        const tokenInput =
+          document.createElement('input');
+
+        tokenInput.type = 'hidden';
+        tokenInput.name = 'idToken';
+        tokenInput.value = idToken;
+
+
+        form.appendChild(pageInput);
+        form.appendChild(tokenInput);
+
+        document.body.appendChild(form);
+
+        form.submit();
+
+      } catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+          'ไม่สามารถเปิดระบบจองได้';
+
+        errorBox.textContent =
+          error.message ||
+          'กรุณาปิดหน้านี้แล้วลองใหม่';
+      }
+    }
+
+
+    startUP2();
+
+  </script>
+
+</body>
+</html>
