@@ -91,14 +91,21 @@
         // 2. ถ้ายังไม่ได้ login
    if (!liff.isLoggedIn()) {
 
-  status.textContent =
-    'กำลังเข้าสู่ระบบ LINE...';
+  if (!liff.isInClient()) {
 
-  liff.login({
-    redirectUri: window.location.href
-  });
+    status.textContent =
+      'กำลังเข้าสู่ระบบ LINE...';
 
-  return;
+    liff.login({
+      redirectUri: window.location.href
+    });
+
+    return;
+  }
+
+  throw new Error(
+    'LIFF เปิดใน LINE แล้ว แต่ยังไม่ได้รับสถานะ Login'
+  );
 }
         // 3. รับ ID Token
         const idToken =
