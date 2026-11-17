@@ -1,13 +1,95 @@
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UP2 Space V18 QA</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, Arial, sans-serif;
+      background: #f6f7f5;
+      color: #182c24;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+    .box {
+      width: min(420px, calc(100% - 48px));
+      padding: 28px 20px;
+      border-radius: 16px;
+      background: #fff;
+      text-align: center;
+      box-shadow: 0 5px 24px #182c2412;
+    }
+    .qa { color: #815900; font-size: 13px; font-weight: 700; }
+    h1 { font-size: 24px; margin: 12px 0; }
+    .status { line-height: 1.6; }
+    .error { color: #a42318; line-height: 1.5; font-size: 14px; }
+  </style>
 </head>
 <body>
-  <h2>UP2 Space V18 QA</h2>
-  <p>Preparing QA LIFF Bridge</p>
+  <main class="box">
+    <div class="qa">QA TEST ENVIRONMENT · NOT FOR CUSTOMERS</div>
+    <h1>UP2 Space V18 QA</h1>
+    <p id="status" class="status">กำลังเชื่อมต่อ LINE...</p>
+    <p id="error" class="error" role="alert"></p>
+  </main>
+
+  <script>
+    // QA ONLY: Do not edit the production root index.html.
+    const LIFF_ID = '2012402500-Au7zTWZg';
+    const BOOKING_URL = 'https://script.google.com/macros/s/AKfycbxxvdM3SC-rX59PaHTvI8ncy4w4iwEjjm48GsZxOrsVBjE1ofpElEjiubdEQ71lrk88hw/exec';
+
+    async function startQA() {
+      const status = document.getElementById('status');
+      const errorBox = document.getElementById('error');
+      try {
+        await liff.init({
+          liffId: LIFF_ID,
+          withLoginOnExternalBrowser: true
+        });
+
+        if (!liff.isLoggedIn()) {
+          if (!liff.isInClient()) {
+            status.textContent = 'กำลังเข้าสู่ระบบ LINE...';
+            liff.login({ redirectUri: window.location.href });
+            return;
+          }
+          throw new Error('ยังไม่ได้รับสถานะ LINE Login');
+        }
+
+        const idToken = liff.getIDToken();
+        if (!idToken) throw new Error('ไม่สามารถรับ LINE ID Token ได้');
+
+        status.textContent = 'กำลังเปิดหน้า Booking V18 QA...';
+        // Send ID token via POST, not in the URL or browser console.
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = BOOKING_URL;
+        form.style.display = 'none';
+
+        for (const [name, value] of Object.entries({ page: 'booking', idToken })) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+      } catch (error) {
+        // Avoid logging ID tokens or request bodies.
+        status.textContent = 'ไม่สามารถเปิดระบบ QA ได้';
+        errorBox.textContent = error && error.message
+          ? error.message
+          : 'กรุณาลองใหม่ผ่าน LINE';
+      }
+    }
+
+    startQA();
+  </script>
 </body>
 </html>
